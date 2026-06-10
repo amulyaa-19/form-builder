@@ -156,7 +156,7 @@ export function SurveyBuilderProvider({
     setQuestions((prev) => {
       const filtered = prev.filter((q) => q.id !== id)
       if (activeQuestionId === id) {
-        setActiveQuestionId(filtered.length > 0 ? filtered[0].id : null)
+        setActiveQuestionId(filtered.length > 0 ? filtered[0]!.id : null)
       }
       return filtered
     })
@@ -171,8 +171,8 @@ export function SurveyBuilderProvider({
       const newQuestions = [...prev]
       // Swap with the item above it
       ;[newQuestions[index - 1], newQuestions[index]] = [
-        newQuestions[index],
-        newQuestions[index - 1],
+        newQuestions[index]!,
+        newQuestions[index - 1]!,
       ]
       return newQuestions
     })
@@ -187,8 +187,8 @@ export function SurveyBuilderProvider({
       const newQuestions = [...prev]
       // Swap with the item below it
       ;[newQuestions[index], newQuestions[index + 1]] = [
-        newQuestions[index + 1],
-        newQuestions[index],
+        newQuestions[index + 1]!,
+        newQuestions[index]!,
       ]
       return newQuestions
     })

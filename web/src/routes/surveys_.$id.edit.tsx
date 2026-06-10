@@ -449,7 +449,7 @@ function RightSettings() {
                           value={opt.value}
                           onChange={(e) => {
                             const nextOpts = [...(activeQuestion.options || [])]
-                            nextOpts[idx].value = e.target.value
+                            nextOpts[idx]!.value = e.target.value
                             updateQuestion(activeQuestion.id, { options: nextOpts })
                           }}
                           placeholder={`Option ${idx + 1}`}

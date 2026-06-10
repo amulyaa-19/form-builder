@@ -103,7 +103,7 @@ export function ResultsView() {
               const isExpanded = expandedRowId === r.id
               // Q1 Logic for Avatar/Preview
               const q1Id = questions[0]?.id
-              const q1Answer = r.answers[q1Id]
+              const q1Answer = r.answers[q1Id!]
               const initials =
                 q1Answer && typeof q1Answer === 'string'
                   ? q1Answer.substring(0, 2).toUpperCase()
@@ -255,7 +255,7 @@ function MultipleChoiceSummary({ question, responses }: { question: any; respons
   })
 
   // Sort options by vote count descending
-  const sortedOptions = [...question.options].sort((a, b) => counts[b.value] - counts[a.value])
+  const sortedOptions = [...question.options].sort((a, b) => counts[b.value]! - counts[a.value]!)
 
   return (
     <div className="space-y-3">

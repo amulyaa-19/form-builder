@@ -50,35 +50,30 @@ function LoginScreen() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#F7F4EF] text-[#1C1917] font-sans antialiased selection:bg-[#1C1917]/10">
-      
       {/* ── BACKGROUND GLOWS ────────────────────────────────────────────── */}
       {/* Soft, clean white glows to add subtle depth without breaking the minimal aesthetic */}
       <div className="absolute left-[15%] top-1/2 h-[600px] w-[600px] -translate-y-1/2 rounded-full bg-white opacity-40 blur-[120px] pointer-events-none" />
       <div className="absolute right-[18%] bottom-[20%] h-[420px] w-[420px] rounded-full bg-white opacity-30 blur-[100px] pointer-events-none" />
 
       <div className="relative z-10 flex w-full max-w-7xl items-center px-4 sm:px-6 lg:px-12">
-
         {/* ── LEFT: Brand panel ─────────────────────────────────────────── */}
         <div className="hidden w-1/2 flex-col justify-center pr-16 lg:flex">
           <div className="max-w-lg animate-in fade-in slide-in-from-left-4 duration-700 ease-out">
-
             {/* Logo mark — matching the dashboard top-bar style */}
             <div className="mb-10 flex h-12 w-12 items-center justify-center rounded-lg bg-[#1C1917] shadow-sm">
-              <span className="font-mono text-xl font-bold text-[#FDFBF8]">
-                S.
-              </span>
+              <span className="font-mono text-xl font-bold text-[#FDFBF8]">S.</span>
             </div>
 
             <h1 className="text-4xl font-bold leading-[1.1] tracking-tight xl:text-5xl text-[#1C1917]">
               Build surveys people actually finish.
             </h1>
             <p className="mt-5 text-lg font-medium text-[#1C1917]/50 leading-relaxed">
-              A focused, high-conversion alternative to standard forms. Designed for clarity, built for response rates.
+              A focused, high-conversion alternative to standard forms. Designed for clarity, built
+              for response rates.
             </p>
 
             {/* ── INTERACTIVE TILTED CARD ───────────────────────────────── */}
             <div className="mt-14 w-full max-w-sm rounded-2xl bg-[#FDFBF8] border border-[#1C1917]/10 p-6 shadow-[0_20px_60px_rgba(28,25,23,0.05)] transition-transform duration-500 hover:rotate-0 -rotate-2">
-              
               {/* Question number row */}
               <div className="mb-6 flex items-center gap-3">
                 <div className="flex h-6 w-6 items-center justify-center rounded bg-[#1C1917]/5 text-xs font-bold text-[#1C1917]/40 font-mono">
@@ -113,12 +108,9 @@ function LoginScreen() {
         {/* ── RIGHT: Auth form ───────────────────────────────────────────── */}
         <div className="flex w-full items-center justify-center lg:w-1/2">
           <div className="w-full max-w-[420px] rounded-[2rem] border border-[#1C1917]/10 bg-[#FDFBF8] p-8 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out delay-150">
-            
             {/* Form header */}
             <div className="mb-8">
-              <h2 className="text-2xl font-bold tracking-tight text-[#1C1917]">
-                Welcome back
-              </h2>
+              <h2 className="text-2xl font-bold tracking-tight text-[#1C1917]">Welcome back</h2>
               <p className="mt-2 text-sm font-medium text-[#1C1917]/50">
                 Sign in to access your survey dashboard.
               </p>
@@ -217,10 +209,7 @@ function LoginScreen() {
 
             <p className="text-center text-sm font-medium text-[#1C1917]/50">
               Don't have an account?{' '}
-              <a
-                href="/register"
-                className="font-bold text-[#1C1917] hover:underline"
-              >
+              <a href="/register" className="font-bold text-[#1C1917] hover:underline">
                 Sign up
               </a>
             </p>

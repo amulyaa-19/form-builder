@@ -275,7 +275,7 @@ surveys.get('/:id/results', async (c) => {
 
     return c.json({
       totalResponses: formattedResponses.length,
-      lastResponseAt: formattedResponses.length > 0 ? formattedResponses[0].submittedAt : null,
+      lastResponseAt: formattedResponses.length > 0 ? formattedResponses[0]!.submittedAt : null,
       responses: formattedResponses,
     })
   } catch (error) {
@@ -297,7 +297,7 @@ surveys.get('/api/surveys/:id/results', async (c) => {
     .all()
 
   const totalResponses = responsesRaw.length
-  const lastResponseAt = totalResponses > 0 ? responsesRaw[0].submitted_at : null
+  const lastResponseAt = totalResponses > 0 ? responsesRaw[0]!.submitted_at : null
 
   if (totalResponses === 0) {
     return c.json({ totalResponses: 0, lastResponseAt: null, responses: [] })
