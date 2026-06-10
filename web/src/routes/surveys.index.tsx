@@ -1,25 +1,35 @@
-import { useState, useEffect } from 'react'
-import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import {
+  Activity,
+  ArrowRight,
+  Calendar,
+  FileText,
+  LayoutDashboard,
+  Loader2,
+  LogOut,
+  PlusCircle,
+} from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from '@/components/ui/dialog'
-import { LogOut, LayoutDashboard, PlusCircle, FileText, Loader2, Calendar, ArrowRight, Activity } from 'lucide-react'
-import { toast } from 'sonner'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 export const Route = createFileRoute('/surveys/')({
   component: DashboardScreen,
 })
 
 interface Survey {
+  response_count: number
   id: string
   title: string
   slug: string
@@ -90,8 +100,10 @@ function DashboardScreen() {
   }
 
   return (
-    <div className="relative flex min-h-screen overflow-hidden font-sans select-none" style={{ background: '#F7F4EF' }}>
-
+    <div
+      className="relative flex min-h-screen overflow-hidden font-sans select-none"
+      style={{ background: '#F7F4EF' }}
+    >
       {/* Sidebar — dark ink panel */}
       <aside
         className="relative z-10 flex w-[220px] flex-col justify-between"
@@ -105,7 +117,10 @@ function DashboardScreen() {
           <div className="mb-10 flex items-center gap-3">
             <div
               className="flex h-9 w-9 items-center justify-center rounded-lg font-mono font-bold text-white text-sm"
-              style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.08)' }}
+              style={{
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.08)',
+              }}
             >
               S.
             </div>
@@ -137,8 +152,8 @@ function DashboardScreen() {
             onClick={handleLogout}
             className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
             style={{ color: 'rgba(255,255,255,0.35)' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#FDFBF8')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#FDFBF8')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}
           >
             <LogOut className="h-4 w-4" />
             Sign out
@@ -148,7 +163,6 @@ function DashboardScreen() {
 
       {/* Main */}
       <main className="relative z-10 flex-1 overflow-y-auto p-10">
-
         {/* Page header */}
         <div className="mb-10 flex items-center justify-between">
           <div>
@@ -181,7 +195,10 @@ function DashboardScreen() {
               }}
             >
               <DialogHeader>
-                <DialogTitle className="text-xl font-bold tracking-tight" style={{ color: '#1C1917' }}>
+                <DialogTitle
+                  className="text-xl font-bold tracking-tight"
+                  style={{ color: '#1C1917' }}
+                >
                   Create a new survey
                 </DialogTitle>
                 <DialogDescription className="text-sm mt-1" style={{ color: '#A8A29E' }}>
@@ -221,7 +238,11 @@ function DashboardScreen() {
                     className="inline-flex items-center justify-center w-full sm:w-auto h-11 px-6 rounded-lg text-sm font-semibold text-white transition-opacity disabled:opacity-50"
                     style={{ background: '#1C1917' }}
                   >
-                    {isCreating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Create survey'}
+                    {isCreating ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      'Create survey'
+                    )}
                   </button>
                 </DialogFooter>
               </form>
@@ -235,7 +256,6 @@ function DashboardScreen() {
             <Loader2 className="h-8 w-8 animate-spin" style={{ color: '#1C1917' }} />
           </div>
         ) : surveys.length > 0 ? (
-
           /* Survey grid */
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {surveys.map((survey) => (
@@ -247,12 +267,14 @@ function DashboardScreen() {
                   border: '1px solid #E2D9CE',
                   boxShadow: '0 1px 4px rgba(28,25,23,0.05)',
                 }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(28,25,23,0.09)'
+                onMouseEnter={(e) => {
+                  ;(e.currentTarget as HTMLDivElement).style.boxShadow =
+                    '0 4px 16px rgba(28,25,23,0.09)'
                   ;(e.currentTarget as HTMLDivElement).style.borderColor = '#C9BFB3'
                 }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 4px rgba(28,25,23,0.05)'
+                onMouseLeave={(e) => {
+                  ;(e.currentTarget as HTMLDivElement).style.boxShadow =
+                    '0 1px 4px rgba(28,25,23,0.05)'
                   ;(e.currentTarget as HTMLDivElement).style.borderColor = '#E2D9CE'
                 }}
               >
@@ -279,10 +301,7 @@ function DashboardScreen() {
                     className="mt-5 grid grid-cols-2 gap-3 border-y py-4"
                     style={{ borderColor: '#E2D9CE' }}
                   >
-                    <div
-                      className="rounded-lg px-3 py-2.5"
-                      style={{ background: '#F7F4EF' }}
-                    >
+                    <div className="rounded-lg px-3 py-2.5" style={{ background: '#F7F4EF' }}>
                       <p
                         className="text-[10px] uppercase tracking-wider font-semibold"
                         style={{ color: '#A8A29E' }}
@@ -293,13 +312,10 @@ function DashboardScreen() {
                         className="text-xl font-bold mt-1 tracking-tight"
                         style={{ color: '#1C1917' }}
                       >
-                        0
+                        <span>{survey.response_count ?? 0} responses</span>
                       </p>
                     </div>
-                    <div
-                      className="rounded-lg px-3 py-2.5"
-                      style={{ background: '#F7F4EF' }}
-                    >
+                    <div className="rounded-lg px-3 py-2.5" style={{ background: '#F7F4EF' }}>
                       <p
                         className="text-[10px] uppercase tracking-wider font-semibold"
                         style={{ color: '#A8A29E' }}
@@ -318,10 +334,7 @@ function DashboardScreen() {
 
                 {/* Card footer */}
                 <div className="mt-4 flex items-center justify-between">
-                  <div
-                    className="flex items-center gap-1.5 text-xs"
-                    style={{ color: '#A8A29E' }}
-                  >
+                  <div className="flex items-center gap-1.5 text-xs" style={{ color: '#A8A29E' }}>
                     <Calendar className="h-3.5 w-3.5" />
                     <span>
                       {new Date(survey.created_at).toLocaleDateString(undefined, {
@@ -342,9 +355,7 @@ function DashboardScreen() {
               </div>
             ))}
           </div>
-
         ) : (
-
           /* Empty state */
           <div
             className="flex h-[480px] flex-col items-center justify-center rounded-2xl border border-dashed p-8 text-center"
@@ -362,10 +373,7 @@ function DashboardScreen() {
             <h2 className="mb-2 text-xl font-bold tracking-tight" style={{ color: '#1C1917' }}>
               No surveys yet
             </h2>
-            <p
-              className="mb-6 max-w-sm text-sm leading-relaxed"
-              style={{ color: '#A8A29E' }}
-            >
+            <p className="mb-6 max-w-sm text-sm leading-relaxed" style={{ color: '#A8A29E' }}>
               You haven't created any surveys. Start building your first one in under two minutes.
             </p>
             <button

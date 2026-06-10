@@ -13,9 +13,8 @@ publicSurveys.get('/surveys/:slug', async (c) => {
 
   try {
     // 1. Fetch the survey metadata by public slug
-    const survey = await db.prepare(
-      `SELECT id, title, primary_color, logo_url FROM surveys WHERE slug = ?`
-    )
+    const survey = await db
+      .prepare(`SELECT id, title, primary_color, logo_url FROM surveys WHERE slug = ?`)
       .bind(slug)
       .first()
 
@@ -24,20 +23,22 @@ publicSurveys.get('/surveys/:slug', async (c) => {
     }
 
     // 2. Fetch all relational questions using the survey's ID
-    const { results: questions } = await db.prepare(
-      `SELECT id, type, prompt, is_required FROM questions WHERE survey_id = ? ORDER BY order_index ASC`
-    )
+    const { results: questions } = await db
+      .prepare(
+        `SELECT id, type, prompt, is_required FROM questions WHERE survey_id = ? ORDER BY order_index ASC`,
+      )
       .bind(survey.id)
       .all()
 
     // 3. Fetch options for these specific questions
-    const { results: options } = await db.prepare(
-      `SELECT qo.id, qo.question_id, qo.value 
+    const { results: options } = await db
+      .prepare(
+        `SELECT qo.id, qo.question_id, qo.value 
        FROM question_options qo
        JOIN questions q ON qo.question_id = q.id
        WHERE q.survey_id = ?
-       ORDER BY qo.order_index ASC`
-    )
+       ORDER BY qo.order_index ASC`,
+      )
       .bind(survey.id)
       .all()
 
@@ -49,7 +50,7 @@ publicSurveys.get('/surveys/:slug', async (c) => {
       is_required: q.is_required === 1,
       options: options
         .filter((o: any) => o.question_id === q.id)
-        .map((o: any) => ({ id: o.id, value: o.value }))
+        .map((o: any) => ({ id: o.id, value: o.value })),
     }))
 
     return c.json({
@@ -57,7 +58,7 @@ publicSurveys.get('/surveys/:slug', async (c) => {
       title: survey.title,
       primary_color: survey.primary_color,
       logo_url: survey.logo_url,
-      questions: structuredQuestions
+      questions: structuredQuestions,
     })
   } catch (error) {
     console.error('Public survey fetch error:', error)
@@ -77,7 +78,7 @@ publicSurveys.post('/surveys/:id/responses', async (c) => {
 
     // 1. Core Record Entry into responses root log table
     statements.push(
-      db.prepare(`INSERT INTO responses (id, survey_id) VALUES (?, ?)`).bind(responseId, surveyId)
+      db.prepare(`INSERT INTO responses (id, survey_id) VALUES (?, ?)`).bind(responseId, surveyId),
     )
 
     // 2. Loop through parameters and compile atomic relational inserts into answers table
@@ -85,11 +86,13 @@ publicSurveys.post('/surveys/:id/responses', async (c) => {
       Object.entries(answers).forEach(([questionId, value]) => {
         // Safe casting value to guarantee database compatibility strings
         const normalizedValue = typeof value === 'string' ? value : JSON.stringify(value)
-        
+
         statements.push(
-          db.prepare(
-            `INSERT INTO answers (id, response_id, question_id, value) VALUES (?, ?, ?, ?)`
-          ).bind(crypto.randomUUID(), responseId, questionId, normalizedValue)
+          db
+            .prepare(
+              `INSERT INTO answers (id, response_id, question_id, value) VALUES (?, ?, ?, ?)`,
+            )
+            .bind(crypto.randomUUID(), responseId, questionId, normalizedValue),
         )
       })
     }

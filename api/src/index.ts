@@ -2,8 +2,8 @@ import { Hono } from 'hono'
 import { deleteCookie, setCookie } from 'hono/cookie'
 import { cors } from 'hono/cors'
 import { sign } from 'hono/jwt'
-import surveys from './routes/survey'
 import publicSurveys from './routes/public'
+import surveys from './routes/survey'
 
 // This matches the types we generated with cf-typegen
 type Bindings = {
