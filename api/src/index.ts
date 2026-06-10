@@ -3,6 +3,7 @@ import { deleteCookie, setCookie } from 'hono/cookie'
 import { cors } from 'hono/cors'
 import { sign } from 'hono/jwt'
 import surveys from './routes/survey'
+import publicSurveys from './routes/public'
 
 // This matches the types we generated with cf-typegen
 type Bindings = {
@@ -97,7 +98,7 @@ auth.post('/login', async (c) => {
     email: user.email,
     exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 24 hours
   }
-  const token = await sign(payload, c.env.JWT_SECRET)
+  const token = await sign(payload, c.env.JWT_SECRET, 'HS256')
 
   // 4. Set the secure cookie
   setCookie(c, 'auth_token', token, {
@@ -120,5 +121,6 @@ auth.post('/logout', (c) => {
 
 app.route('/api/auth', auth)
 app.route('/api/surveys', surveys)
+app.route('/api/public', publicSurveys)
 
 export default app
