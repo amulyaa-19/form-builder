@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { CheckCircle2, Loader2, PenLine, ShieldCheck } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { getBrandTint, getContrastTextColor, setDocumentBrand } from '../utils/brand'
 
 export const Route = createFileRoute('/s_/$slug')({
   component: PublicSurveyView,
@@ -32,7 +33,6 @@ function PublicSurveyView() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [hasSubmitted, setHasSubmitted] = useState(false)
   const [validationError, setValidationError] = useState<string | null>(null)
-
   const [focusedId, setFocusedId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -42,6 +42,9 @@ function PublicSurveyView() {
         if (!response.ok) throw new Error('Survey could not be retrieved.')
         const data = await response.json()
         setSurvey(data)
+
+        // ⚡ Senior Branding: Hijack the browser tab
+        setDocumentBrand(data.title, data.logo_url)
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Something went wrong.')
       } finally {
@@ -83,9 +86,7 @@ function PublicSurveyView() {
       if (!response.ok) throw new Error('Failed to record responses.')
       setHasSubmitted(true)
     } catch (err: unknown) {
-      setValidationError(
-        err instanceof Error ? err.message : 'Submission failed. Please try again.',
-      )
+      setValidationError(err instanceof Error ? err.message : 'Submission failed.')
     } finally {
       setIsSubmitting(false)
     }
@@ -111,10 +112,21 @@ function PublicSurveyView() {
     )
   }
 
+  // ⚡ Senior Branding: Dynamic Theme Generation
+  const brandColor = survey.primary_color || '#1C1917'
+  const brandTextColor = getContrastTextColor(brandColor)
+  const brandTint = getBrandTint(brandColor, 0.03)
+
   if (hasSubmitted) {
     return (
-      <div className="h-screen bg-[#F7F4EF] flex flex-col items-center justify-center text-center p-6 font-sans selection:bg-[#1C1917]/10 animate-in fade-in duration-700">
-        <div className="rounded-full h-12 w-12 bg-[#1C1917] text-[#FDFBF8] flex items-center justify-center mb-4 shadow-sm">
+      <div
+        className="h-screen flex flex-col items-center justify-center text-center p-6 font-sans selection:bg-[#1C1917]/10 animate-in fade-in duration-700"
+        style={{ backgroundColor: brandTint }}
+      >
+        <div
+          className="rounded-full h-12 w-12 flex items-center justify-center mb-4 shadow-sm"
+          style={{ backgroundColor: brandColor, color: brandTextColor }}
+        >
           <CheckCircle2 className="h-6 w-6" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-[#1C1917]">Submission Complete</h1>
@@ -135,8 +147,17 @@ function PublicSurveyView() {
   )
 
   return (
-    <div className="min-h-screen bg-[#F7F4EF] text-[#1C1917] font-sans antialiased pb-32 selection:bg-[#1C1917]/10 relative">
-      {/* Subtle Architectural Dot Grid Background */}
+    <div
+      className="min-h-screen text-[#1C1917] font-sans antialiased pb-32 selection:bg-[#1C1917]/10 relative transition-colors duration-500"
+      style={
+        {
+          backgroundColor: brandTint,
+          '--brand-color': brandColor,
+          '--brand-text': brandTextColor,
+        } as React.CSSProperties
+      }
+    >
+      {/* Background Pattern */}
       <div
         className="fixed inset-0 pointer-events-none z-0"
         style={{
@@ -146,43 +167,42 @@ function PublicSurveyView() {
         }}
       />
 
-      {/* The High-ROI Progress Bar */}
+      {/* Progress Bar */}
       <div className="fixed top-0 left-0 w-full h-1 z-50 bg-[#1C1917]/5">
         <div
-          className="h-full bg-[#1C1917]"
-          style={{ width: `${progressPercentage}%`, transition: 'width 0.4s ease' }}
+          className="h-full"
+          style={{
+            width: `${progressPercentage}%`,
+            backgroundColor: 'var(--brand-color)',
+            transition: 'width 0.4s ease',
+          }}
         />
       </div>
 
-      {/* Main Content (Elevated above background grid) */}
       <div className="max-w-2xl mx-auto px-6 pt-24 relative z-10">
         <form onSubmit={handleSubmit} className="w-full space-y-12">
-          {/* Human Header with Instructions */}
+          {/* Header */}
           <div className="border-b border-[#1C1917]/10 pb-10 mb-8">
             {survey.logo_url && (
               <img
                 src={survey.logo_url}
-                alt="Logo"
-                className="w-12 h-12 rounded-lg object-contain filter grayscale border border-[#1C1917]/10 p-1.5 bg-white mb-6 shadow-sm"
+                alt="Brand Logo"
+                className="w-12 h-12 rounded-lg object-contain border border-[#1C1917]/10 p-1.5 bg-white mb-6 shadow-sm"
               />
             )}
-
             <h1 className="text-3xl font-bold tracking-tight text-[#1C1917] leading-tight mb-3">
               {survey.title}
             </h1>
-
             <p className="text-sm font-medium text-[#1C1917]/60 leading-relaxed max-w-xl">
-              Please take a moment to fill out this form. Your honest responses are saved securely
-              and help us gather valuable insights.
+              Please take a moment to fill out this form. Your honest responses are saved securely.
             </p>
-
             <div className="flex items-center gap-2 mt-6 text-xs font-bold font-mono tracking-wide text-[#1C1917]/50 bg-[#1C1917]/[0.03] border border-[#1C1917]/5 w-fit px-3 py-1.5 rounded-md">
               <PenLine className="w-3.5 h-3.5 opacity-70" />
               {answeredCount} of {totalQuestions} answered · Takes ~2 min
             </div>
           </div>
 
-          {/* Render Form Inputs Loop */}
+          {/* Form Loop */}
           <div className="space-y-6">
             {survey.questions.map((q, index) => {
               const hasAnswer = answersState[q.id] && answersState[q.id]?.trim() !== ''
@@ -191,7 +211,7 @@ function PublicSurveyView() {
               let cardClasses = 'relative p-8 bg-[#FDFBF8] rounded-xl transition-all duration-300 '
               if (isActive) {
                 cardClasses +=
-                  'border-[1.5px] border-[#1C1917] shadow-[4px_4px_0_0_#1C1917] opacity-100 scale-[1.01]'
+                  'border-[1.5px] shadow-[4px_4px_0_0_var(--brand-color)] opacity-100 scale-[1.01]'
               } else if (hasAnswer) {
                 cardClasses += 'border border-[#1C1917]/10 opacity-80 hover:opacity-100 shadow-sm'
               } else {
@@ -199,11 +219,15 @@ function PublicSurveyView() {
               }
 
               return (
-                <div key={q.id} className={cardClasses}>
-                  {/* Invisible Overlay Button for Accessibility when clicking the card background */}
+                <div
+                  key={q.id}
+                  className={cardClasses}
+                  style={isActive ? { borderColor: 'var(--brand-color)' } : {}}
+                >
                   <button
                     type="button"
-                    className="absolute inset-0 w-full h-full z-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1917] rounded-xl"
+                    className="absolute inset-0 w-full h-full z-0 cursor-pointer focus:outline-none focus-visible:ring-2 rounded-xl"
+                    style={{ outlineColor: 'var(--brand-color)' }}
                     onClick={() => setFocusedId(q.id)}
                     aria-label={`Focus question ${index + 1}`}
                   >
@@ -215,7 +239,6 @@ function PublicSurveyView() {
                       <span className="text-xs font-mono font-bold text-[#1C1917]/40 mt-1">
                         {index + 1}.
                       </span>
-                      {/* Changed from <label> to <div> for strict A11y compliance */}
                       <div className="font-semibold text-base tracking-tight text-[#1C1917]">
                         {q.prompt || (
                           <span className="italic font-normal text-[#1C1917]/30">
@@ -223,10 +246,7 @@ function PublicSurveyView() {
                           </span>
                         )}
                         {q.is_required && (
-                          <span
-                            className="ml-1 font-bold"
-                            style={{ color: survey.primary_color || '#1C1917' }}
-                          >
+                          <span className="ml-1 font-bold" style={{ color: 'var(--brand-color)' }}>
                             *
                           </span>
                         )}
@@ -236,7 +256,8 @@ function PublicSurveyView() {
                     {q.type === 'short_text' && (
                       <input
                         type="text"
-                        className="w-full bg-transparent border-b border-[#1C1917]/20 focus:border-[#1C1917] transition-colors outline-none pb-1.5 text-sm font-medium tracking-tight placeholder:text-[#1C1917]/20 placeholder:italic focus:ring-0 p-0"
+                        className="w-full bg-transparent border-b border-[#1C1917]/20 outline-none pb-1.5 text-sm font-medium tracking-tight placeholder:text-[#1C1917]/20 placeholder:italic focus:ring-0 p-0 transition-colors"
+                        style={isActive ? { borderColor: 'var(--brand-color)' } : {}}
                         placeholder="Type your answer here..."
                         value={answersState[q.id] || ''}
                         onChange={(e) => handleValueChange(q.id, e.target.value)}
@@ -258,22 +279,23 @@ function PublicSurveyView() {
                               }}
                               className={`w-full flex items-center gap-3 px-4 py-3 border rounded-lg text-xs font-semibold transition-all text-left ${
                                 isSelected
-                                  ? 'border-[#1C1917] bg-[#1C1917]/5 shadow-sm'
+                                  ? 'bg-black/5 shadow-sm'
                                   : 'border-[#1C1917]/10 bg-transparent hover:border-[#1C1917]/30'
                               }`}
+                              style={isSelected ? { borderColor: 'var(--brand-color)' } : {}}
                             >
                               <div
                                 className="w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-all shrink-0 bg-[#FDFBF8]"
                                 style={{
                                   borderColor: isSelected
-                                    ? survey.primary_color || '#1C1917'
+                                    ? 'var(--brand-color)'
                                     : 'rgba(28,25,23,0.2)',
                                 }}
                               >
                                 {isSelected && (
                                   <div
                                     className="w-1.5 h-1.5 rounded-full"
-                                    style={{ backgroundColor: survey.primary_color || '#1C1917' }}
+                                    style={{ backgroundColor: 'var(--brand-color)' }}
                                   />
                                 )}
                               </div>
@@ -301,13 +323,11 @@ function PublicSurveyView() {
                               }}
                               className="w-10 h-10 border rounded-lg flex items-center justify-center font-mono text-xs font-bold transition-all"
                               style={{
-                                backgroundColor: isSelected
-                                  ? survey.primary_color || '#1C1917'
-                                  : 'transparent',
+                                backgroundColor: isSelected ? 'var(--brand-color)' : 'transparent',
                                 borderColor: isSelected
-                                  ? survey.primary_color || '#1C1917'
+                                  ? 'var(--brand-color)'
                                   : 'rgba(28,25,23,0.1)',
-                                color: isSelected ? '#FDFBF8' : 'rgba(28,25,23,0.6)',
+                                color: isSelected ? 'var(--brand-text)' : 'rgba(28,25,23,0.6)',
                               }}
                             >
                               {num}
@@ -324,8 +344,11 @@ function PublicSurveyView() {
         </form>
       </div>
 
-      {/* The Sticky Submit Anchor */}
-      <div className="fixed bottom-0 left-0 w-full bg-[#F7F4EF]/95 backdrop-blur-md border-t border-[#1C1917]/10 px-6 py-4 z-40">
+      {/* Sticky Submit Footer */}
+      <div
+        className="fixed bottom-0 left-0 w-full backdrop-blur-md border-t border-[#1C1917]/10 px-6 py-4 z-40"
+        style={{ backgroundColor: 'color-mix(in srgb, var(--brand-color) 3%, #F7F4EF 97%)' }}
+      >
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1C1917]/50">
             <ShieldCheck className="h-4 w-4" />
@@ -342,8 +365,11 @@ function PublicSurveyView() {
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitDisabled || isSubmitting}
-              className="inline-flex items-center justify-center h-11 px-8 rounded-lg text-xs uppercase tracking-widest font-bold font-sans text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 shadow-sm"
-              style={{ backgroundColor: survey.primary_color || '#1C1917' }}
+              className="inline-flex items-center justify-center h-11 px-8 rounded-lg text-xs uppercase tracking-widest font-bold font-sans transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 shadow-sm"
+              style={{
+                backgroundColor: 'var(--brand-color)',
+                color: 'var(--brand-text)',
+              }}
             >
               {isSubmitting ? (
                 <>

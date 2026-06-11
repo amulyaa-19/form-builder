@@ -309,20 +309,6 @@ function DashboardScreen() {
                         <span>{survey.response_count ?? 0} responses</span>
                       </p>
                     </div>
-                    <div className="rounded-lg px-3 py-2.5" style={{ background: '#F7F4EF' }}>
-                      <p
-                        className="text-[10px] uppercase tracking-wider font-semibold"
-                        style={{ color: '#A8A29E' }}
-                      >
-                        Completion
-                      </p>
-                      <p
-                        className="text-xl font-bold mt-1 tracking-tight"
-                        style={{ color: '#1C1917' }}
-                      >
-                        0%
-                      </p>
-                    </div>
                   </div>
                 </div>
 

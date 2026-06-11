@@ -21,7 +21,7 @@ export const Route = createFileRoute('/surveys_/$id/edit')({
   component: SurveyWorkspaceWrapper,
 })
 
-export default function SurveyWorkspaceWrapper() {
+function SurveyWorkspaceWrapper() {
   const { id } = Route.useParams()
 
   return (
