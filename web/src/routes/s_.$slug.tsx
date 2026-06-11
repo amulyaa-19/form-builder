@@ -42,8 +42,8 @@ function PublicSurveyView() {
         if (!response.ok) throw new Error('Survey could not be retrieved.')
         const data = await response.json()
         setSurvey(data)
-      } catch (err: any) {
-        setError(err.message || 'Something went wrong.')
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Something went wrong.')
       } finally {
         setIsLoading(false)
       }
@@ -61,7 +61,7 @@ function PublicSurveyView() {
     if (!survey) return
 
     for (const q of survey.questions) {
-      if (q.is_required && (!answersState[q.id] || answersState[q.id]!.trim() === '')) {
+      if (q.is_required && (!answersState[q.id] || answersState[q.id]?.trim() === '')) {
         setValidationError(
           `Please complete all required fields. ("${q.prompt || 'Untitled Question'}" is missing)`,
         )
@@ -82,8 +82,10 @@ function PublicSurveyView() {
 
       if (!response.ok) throw new Error('Failed to record responses.')
       setHasSubmitted(true)
-    } catch (err: any) {
-      setValidationError(err.message || 'Submission failed. Please try again.')
+    } catch (err: unknown) {
+      setValidationError(
+        err instanceof Error ? err.message : 'Submission failed. Please try again.',
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -125,16 +127,16 @@ function PublicSurveyView() {
 
   const totalQuestions = survey.questions.length
   const answeredCount = survey.questions.filter(
-    (q) => answersState[q.id] && answersState[q.id]!.trim() !== '',
+    (q) => answersState[q.id] && answersState[q.id]?.trim() !== '',
   ).length
   const progressPercentage = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0
   const isSubmitDisabled = survey.questions.some(
-    (q) => q.is_required && (!answersState[q.id] || answersState[q.id]!.trim() === ''),
+    (q) => q.is_required && (!answersState[q.id] || answersState[q.id]?.trim() === ''),
   )
 
   return (
     <div className="min-h-screen bg-[#F7F4EF] text-[#1C1917] font-sans antialiased pb-32 selection:bg-[#1C1917]/10 relative">
-      {/* ⚡ NEW: Subtle Architectural Dot Grid Background */}
+      {/* Subtle Architectural Dot Grid Background */}
       <div
         className="fixed inset-0 pointer-events-none z-0"
         style={{
@@ -155,7 +157,7 @@ function PublicSurveyView() {
       {/* Main Content (Elevated above background grid) */}
       <div className="max-w-2xl mx-auto px-6 pt-24 relative z-10">
         <form onSubmit={handleSubmit} className="w-full space-y-12">
-          {/* ⚡ NEW: Upgraded Human Header with Instructions */}
+          {/* Human Header with Instructions */}
           <div className="border-b border-[#1C1917]/10 pb-10 mb-8">
             {survey.logo_url && (
               <img
@@ -183,125 +185,138 @@ function PublicSurveyView() {
           {/* Render Form Inputs Loop */}
           <div className="space-y-6">
             {survey.questions.map((q, index) => {
-              const hasAnswer = answersState[q.id] && answersState[q.id]!.trim() !== ''
+              const hasAnswer = answersState[q.id] && answersState[q.id]?.trim() !== ''
               const isActive = focusedId === q.id
 
-              let cardClasses = 'p-8 bg-[#FDFBF8] rounded-xl space-y-4 transition-all duration-300 '
+              let cardClasses = 'relative p-8 bg-[#FDFBF8] rounded-xl transition-all duration-300 '
               if (isActive) {
                 cardClasses +=
                   'border-[1.5px] border-[#1C1917] shadow-[4px_4px_0_0_#1C1917] opacity-100 scale-[1.01]'
               } else if (hasAnswer) {
-                cardClasses +=
-                  'border border-[#1C1917]/10 opacity-80 hover:opacity-100 cursor-pointer shadow-sm'
+                cardClasses += 'border border-[#1C1917]/10 opacity-80 hover:opacity-100 shadow-sm'
               } else {
-                cardClasses += 'border border-[#1C1917]/10 opacity-100 cursor-pointer shadow-sm'
+                cardClasses += 'border border-[#1C1917]/10 opacity-100 shadow-sm'
               }
 
               return (
-                <div
-                  key={q.id}
-                  className={cardClasses}
-                  onClick={() => setFocusedId(q.id)}
-                  onFocus={() => setFocusedId(q.id)}
-                  tabIndex={0}
-                >
-                  <div className="flex items-start gap-2">
-                    <span className="text-xs font-mono font-bold text-[#1C1917]/40 mt-1">
-                      {index + 1}.
-                    </span>
-                    <label className="font-semibold text-base tracking-tight text-[#1C1917]">
-                      {q.prompt || (
-                        <span className="italic font-normal text-[#1C1917]/30">
-                          Untitled Question
-                        </span>
-                      )}
-                      {q.is_required && (
-                        <span
-                          className="ml-1 font-bold"
-                          style={{ color: survey.primary_color || '#1C1917' }}
-                        >
-                          *
-                        </span>
-                      )}
-                    </label>
-                  </div>
+                <div key={q.id} className={cardClasses}>
+                  {/* Invisible Overlay Button for Accessibility when clicking the card background */}
+                  <button
+                    type="button"
+                    className="absolute inset-0 w-full h-full z-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1917] rounded-xl"
+                    onClick={() => setFocusedId(q.id)}
+                    aria-label={`Focus question ${index + 1}`}
+                  >
+                    <span className="sr-only">Focus question {index + 1}</span>
+                  </button>
 
-                  {q.type === 'short_text' && (
-                    <input
-                      type="text"
-                      className="w-full bg-transparent border-b border-[#1C1917]/20 focus:border-[#1C1917] transition-colors outline-none pb-1.5 text-sm font-medium tracking-tight placeholder:text-[#1C1917]/20 placeholder:italic focus:ring-0 p-0"
-                      placeholder="Type your answer here..."
-                      value={answersState[q.id] || ''}
-                      onChange={(e) => handleValueChange(q.id, e.target.value)}
-                    />
-                  )}
-
-                  {q.type === 'multiple_choice' && (
-                    <div className="space-y-2 pt-1">
-                      {q.options?.map((opt) => {
-                        const isSelected = answersState[q.id] === opt.value
-                        return (
-                          <button
-                            type="button"
-                            key={opt.id}
-                            onClick={() => handleValueChange(q.id, opt.value)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 border rounded-lg text-xs font-semibold transition-all text-left ${
-                              isSelected
-                                ? 'border-[#1C1917] bg-[#1C1917]/5 shadow-sm'
-                                : 'border-[#1C1917]/10 bg-transparent hover:border-[#1C1917]/30'
-                            }`}
+                  <div className="relative z-10 space-y-4">
+                    <div className="flex items-start gap-2">
+                      <span className="text-xs font-mono font-bold text-[#1C1917]/40 mt-1">
+                        {index + 1}.
+                      </span>
+                      {/* Changed from <label> to <div> for strict A11y compliance */}
+                      <div className="font-semibold text-base tracking-tight text-[#1C1917]">
+                        {q.prompt || (
+                          <span className="italic font-normal text-[#1C1917]/30">
+                            Untitled Question
+                          </span>
+                        )}
+                        {q.is_required && (
+                          <span
+                            className="ml-1 font-bold"
+                            style={{ color: survey.primary_color || '#1C1917' }}
                           >
-                            <div
-                              className="w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-all shrink-0 bg-[#FDFBF8]"
+                            *
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {q.type === 'short_text' && (
+                      <input
+                        type="text"
+                        className="w-full bg-transparent border-b border-[#1C1917]/20 focus:border-[#1C1917] transition-colors outline-none pb-1.5 text-sm font-medium tracking-tight placeholder:text-[#1C1917]/20 placeholder:italic focus:ring-0 p-0"
+                        placeholder="Type your answer here..."
+                        value={answersState[q.id] || ''}
+                        onChange={(e) => handleValueChange(q.id, e.target.value)}
+                        onFocus={() => setFocusedId(q.id)}
+                      />
+                    )}
+
+                    {q.type === 'multiple_choice' && (
+                      <div className="space-y-2 pt-1">
+                        {q.options?.map((opt) => {
+                          const isSelected = answersState[q.id] === opt.value
+                          return (
+                            <button
+                              type="button"
+                              key={opt.id}
+                              onClick={() => {
+                                setFocusedId(q.id)
+                                handleValueChange(q.id, opt.value)
+                              }}
+                              className={`w-full flex items-center gap-3 px-4 py-3 border rounded-lg text-xs font-semibold transition-all text-left ${
+                                isSelected
+                                  ? 'border-[#1C1917] bg-[#1C1917]/5 shadow-sm'
+                                  : 'border-[#1C1917]/10 bg-transparent hover:border-[#1C1917]/30'
+                              }`}
+                            >
+                              <div
+                                className="w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-all shrink-0 bg-[#FDFBF8]"
+                                style={{
+                                  borderColor: isSelected
+                                    ? survey.primary_color || '#1C1917'
+                                    : 'rgba(28,25,23,0.2)',
+                                }}
+                              >
+                                {isSelected && (
+                                  <div
+                                    className="w-1.5 h-1.5 rounded-full"
+                                    style={{ backgroundColor: survey.primary_color || '#1C1917' }}
+                                  />
+                                )}
+                              </div>
+                              <span className={isSelected ? 'text-[#1C1917]' : 'text-[#1C1917]/70'}>
+                                {opt.value}
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {q.type === 'rating' && (
+                      <div className="flex gap-2 pt-2">
+                        {[1, 2, 3, 4, 5].map((num) => {
+                          const stringNum = num.toString()
+                          const isSelected = answersState[q.id] === stringNum
+                          return (
+                            <button
+                              type="button"
+                              key={num}
+                              onClick={() => {
+                                setFocusedId(q.id)
+                                handleValueChange(q.id, stringNum)
+                              }}
+                              className="w-10 h-10 border rounded-lg flex items-center justify-center font-mono text-xs font-bold transition-all"
                               style={{
+                                backgroundColor: isSelected
+                                  ? survey.primary_color || '#1C1917'
+                                  : 'transparent',
                                 borderColor: isSelected
                                   ? survey.primary_color || '#1C1917'
-                                  : 'rgba(28,25,23,0.2)',
+                                  : 'rgba(28,25,23,0.1)',
+                                color: isSelected ? '#FDFBF8' : 'rgba(28,25,23,0.6)',
                               }}
                             >
-                              {isSelected && (
-                                <div
-                                  className="w-1.5 h-1.5 rounded-full"
-                                  style={{ backgroundColor: survey.primary_color || '#1C1917' }}
-                                />
-                              )}
-                            </div>
-                            <span className={isSelected ? 'text-[#1C1917]' : 'text-[#1C1917]/70'}>
-                              {opt.value}
-                            </span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )}
-
-                  {q.type === 'rating' && (
-                    <div className="flex gap-2 pt-2">
-                      {[1, 2, 3, 4, 5].map((num) => {
-                        const stringNum = num.toString()
-                        const isSelected = answersState[q.id] === stringNum
-                        return (
-                          <button
-                            type="button"
-                            key={num}
-                            onClick={() => handleValueChange(q.id, stringNum)}
-                            className="w-10 h-10 border rounded-lg flex items-center justify-center font-mono text-xs font-bold transition-all"
-                            style={{
-                              backgroundColor: isSelected
-                                ? survey.primary_color || '#1C1917'
-                                : 'transparent',
-                              borderColor: isSelected
-                                ? survey.primary_color || '#1C1917'
-                                : 'rgba(28,25,23,0.1)',
-                              color: isSelected ? '#FDFBF8' : 'rgba(28,25,23,0.6)',
-                            }}
-                          >
-                            {num}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )}
+                              {num}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )
             })}

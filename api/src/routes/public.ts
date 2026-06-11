@@ -3,7 +3,18 @@ import { Hono } from 'hono'
 type Bindings = {
   DB: D1Database
 }
+interface DBQuestion {
+  prompt: string
+  id: string
+  type: 'short_text' | 'multiple_choice' | 'rating'
+  is_required: number
+}
 
+interface DBOption {
+  id: string
+  question_id: string
+  value: string
+}
 const publicSurveys = new Hono<{ Bindings: Bindings }>()
 
 // GET /api/public/surveys/:slug -> Fetch survey structure for respondents via slug
@@ -43,14 +54,14 @@ publicSurveys.get('/surveys/:slug', async (c) => {
       .all()
 
     // 4. Structure the payload safely for the respondent UI
-    const structuredQuestions = questions.map((q: any) => ({
+    const structuredQuestions = (questions as unknown as DBQuestion[]).map((q: DBQuestion) => ({
       id: q.id,
       type: q.type,
       prompt: q.prompt,
       is_required: q.is_required === 1,
-      options: options
-        .filter((o: any) => o.question_id === q.id)
-        .map((o: any) => ({ id: o.id, value: o.value })),
+      options: (options as unknown as DBOption[])
+        .filter((o: DBOption) => o.question_id === q.id)
+        .map((o: DBOption) => ({ id: o.id, value: o.value })),
     }))
 
     return c.json({

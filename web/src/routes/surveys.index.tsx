@@ -11,7 +11,6 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -57,7 +56,7 @@ function DashboardScreen() {
         } else if (response.status === 401) {
           navigate({ to: '/login' })
         }
-      } catch (error) {
+      } catch (_error) {
         toast.error('Failed to load surveys')
       } finally {
         setIsPageLoading(false)
@@ -86,8 +85,8 @@ function DashboardScreen() {
       setIsOpen(false)
       setTitle('')
 
-      navigate({ to: `/surveys/${data.id}/edit` as any })
-    } catch (error) {
+      navigate({ to: '/surveys/$id/edit', params: { id: data.id } })
+    } catch (_error) {
       toast.error('Something went wrong.')
     } finally {
       setIsCreating(false)
@@ -104,7 +103,7 @@ function DashboardScreen() {
       className="relative flex min-h-screen overflow-hidden font-sans select-none"
       style={{ background: '#F7F4EF' }}
     >
-      {/* Sidebar — dark ink panel */}
+      {/* Sidebar */}
       <aside
         className="relative z-10 flex w-[220px] flex-col justify-between"
         style={{
@@ -131,8 +130,8 @@ function DashboardScreen() {
 
           {/* Nav */}
           <nav className="space-y-1">
-            <a
-              href="#"
+            <button
+              type="button"
               className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all"
               style={{
                 background: 'rgba(255,255,255,0.1)',
@@ -142,7 +141,7 @@ function DashboardScreen() {
             >
               <LayoutDashboard className="h-4 w-4" style={{ color: '#FDFBF8' }} />
               My Surveys
-            </a>
+            </button>
           </nav>
         </div>
 
@@ -261,25 +260,20 @@ function DashboardScreen() {
             {surveys.map((survey) => (
               <div
                 key={survey.id}
-                className="group relative flex flex-col justify-between rounded-xl p-6 transition-all duration-200 hover:-translate-y-0.5"
-                style={{
-                  background: '#FDFBF8',
-                  border: '1px solid #E2D9CE',
-                  boxShadow: '0 1px 4px rgba(28,25,23,0.05)',
-                }}
-                onMouseEnter={(e) => {
-                  ;(e.currentTarget as HTMLDivElement).style.boxShadow =
-                    '0 4px 16px rgba(28,25,23,0.09)'
-                  ;(e.currentTarget as HTMLDivElement).style.borderColor = '#C9BFB3'
-                }}
-                onMouseLeave={(e) => {
-                  ;(e.currentTarget as HTMLDivElement).style.boxShadow =
-                    '0 1px 4px rgba(28,25,23,0.05)'
-                  ;(e.currentTarget as HTMLDivElement).style.borderColor = '#E2D9CE'
-                }}
+                className="group relative flex flex-col justify-between rounded-xl p-6 transition-all duration-200 hover:-translate-y-0.5 bg-[#FDFBF8] border border-[#E2D9CE] hover:border-[#C9BFB3] shadow-[0_1px_4px_rgba(28,25,23,0.05)] hover:shadow-[0_4px_16px_rgba(28,25,23,0.09)]"
               >
+                {/* Invisible Overlay Link for Accessibility */}
+                <Link
+                  to="/surveys/$id/edit"
+                  params={{ id: survey.id }}
+                  className="absolute inset-0 z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1917] rounded-xl"
+                  aria-label={`Edit survey: ${survey.title}`}
+                >
+                  <span className="sr-only">Edit survey</span>
+                </Link>
+
                 {/* Card top */}
-                <div>
+                <div className="relative z-20 pointer-events-none">
                   <div className="flex items-start justify-between gap-4">
                     <h3
                       className="font-bold text-base tracking-tight line-clamp-1"
@@ -333,7 +327,7 @@ function DashboardScreen() {
                 </div>
 
                 {/* Card footer */}
-                <div className="mt-4 flex items-center justify-between">
+                <div className="mt-4 flex items-center justify-between relative z-20 pointer-events-none">
                   <div className="flex items-center gap-1.5 text-xs" style={{ color: '#A8A29E' }}>
                     <Calendar className="h-3.5 w-3.5" />
                     <span>
@@ -343,14 +337,15 @@ function DashboardScreen() {
                       })}
                     </span>
                   </div>
-                  <Link
-                    to={`/surveys/${survey.id}/edit` as any}
+                  {/* Visually identical to the old link, but now just a span since the overlay handles clicks */}
+                  <span
                     className="inline-flex items-center gap-1 text-xs font-semibold transition-all group-hover:gap-1.5 duration-200"
                     style={{ color: '#1C1917' }}
+                    aria-hidden="true"
                   >
                     Edit survey
                     <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
+                  </span>
                 </div>
               </div>
             ))}

@@ -52,8 +52,8 @@ function LoginScreen() {
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#F7F4EF] text-[#1C1917] font-sans antialiased selection:bg-[#1C1917]/10">
       {/* ── BACKGROUND GLOWS ────────────────────────────────────────────── */}
       {/* Soft, clean white glows to add subtle depth without breaking the minimal aesthetic */}
-      <div className="absolute left-[15%] top-1/2 h-[600px] w-[600px] -translate-y-1/2 rounded-full bg-white opacity-40 blur-[120px] pointer-events-none" />
-      <div className="absolute right-[18%] bottom-[20%] h-[420px] w-[420px] rounded-full bg-white opacity-30 blur-[100px] pointer-events-none" />
+      <div className="absolute left-[15%] top-1/2 h-150 w-150 -translate-y-1/2 rounded-full bg-white opacity-40 blur-[120px] pointer-events-none" />
+      <div className="absolute right-[18%] bottom-[20%] h-105 w-105 rounded-full bg-white opacity-30 blur-[100px] pointer-events-none" />
 
       <div className="relative z-10 flex w-full max-w-7xl items-center px-4 sm:px-6 lg:px-12">
         {/* ── LEFT: Brand panel ─────────────────────────────────────────── */}
@@ -86,18 +86,18 @@ function LoginScreen() {
               <div className="space-y-3">
                 {/* Selected option */}
                 <div className="flex items-center gap-3 rounded-xl border-2 border-[#1C1917] bg-[#1C1917]/5 p-3 shadow-sm">
-                  <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-[#1C1917]" />
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-[#1C1917]" />
                   <div className="h-2.5 w-1/2 rounded-full bg-[#1C1917]/60" />
                 </div>
 
                 {/* Unselected options */}
                 <div className="flex items-center gap-3 rounded-xl border border-[#1C1917]/10 bg-transparent p-3">
-                  <Circle className="h-5 w-5 flex-shrink-0 text-[#1C1917]/20" />
+                  <Circle className="h-5 w-5 shrink-0 text-[#1C1917]/20" />
                   <div className="h-2.5 w-2/3 rounded-full bg-[#1C1917]/10" />
                 </div>
 
                 <div className="flex items-center gap-3 rounded-xl border border-[#1C1917]/10 bg-transparent p-3">
-                  <Circle className="h-5 w-5 flex-shrink-0 text-[#1C1917]/20" />
+                  <Circle className="h-5 w-5 shrink-0 text-[#1C1917]/20" />
                   <div className="h-2.5 w-1/3 rounded-full bg-[#1C1917]/10" />
                 </div>
               </div>
@@ -107,7 +107,7 @@ function LoginScreen() {
 
         {/* ── RIGHT: Auth form ───────────────────────────────────────────── */}
         <div className="flex w-full items-center justify-center lg:w-1/2">
-          <div className="w-full max-w-[420px] rounded-[2rem] border border-[#1C1917]/10 bg-[#FDFBF8] p-8 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out delay-150">
+          <div className="w-full max-w-105 rounded-4xl border border-[#1C1917]/10 bg-[#FDFBF8] p-8 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out delay-150">
             {/* Form header */}
             <div className="mb-8">
               <h2 className="text-2xl font-bold tracking-tight text-[#1C1917]">Welcome back</h2>

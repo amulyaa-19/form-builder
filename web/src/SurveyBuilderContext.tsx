@@ -1,5 +1,5 @@
 import type React from 'react'
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 
 export type QuestionType = 'short_text' | 'multiple_choice' | 'rating'
 
@@ -60,7 +60,6 @@ export function SurveyBuilderProvider({
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
 
-  // Prevent autosave from triggering on the very first initial database load
   const isInitialLoad = useRef(true)
 
   // --- 1. HYDRATION: Fetch current structure from database on mount ---
@@ -88,7 +87,6 @@ export function SurveyBuilderProvider({
         console.error('Failed to load survey layout:', error)
       } finally {
         setIsLoading(false)
-        // Allow the autosave listener to start tracking changes
         setTimeout(() => {
           isInitialLoad.current = false
         }, 100)
@@ -98,7 +96,8 @@ export function SurveyBuilderProvider({
   }, [surveyId])
 
   // --- 2. SYNCHRONIZATION: The Core Save Pipeline ---
-  const saveSurvey = async () => {
+  // Memoized so it can be safely used as a dependency
+  const saveSurvey = useCallback(async () => {
     setIsSaving(true)
     try {
       const response = await fetch(`http://localhost:8787/api/surveys/${surveyId}`, {
@@ -120,21 +119,20 @@ export function SurveyBuilderProvider({
     } finally {
       setIsSaving(false)
     }
-  }
+  }, [surveyId, branding, questions])
 
   // --- 3. AUTOSAVE: Debounced state listener ---
   useEffect(() => {
     if (isInitialLoad.current) return
 
-    // Wait 800ms after the user stops typing or changing toggles before saving to D1
     const timer = setTimeout(() => {
       saveSurvey()
     }, 800)
 
     return () => clearTimeout(timer)
-  }, [questions, branding])
+  }, [saveSurvey]) // Now depends on the stable memoized function
 
-  // --- 4. STATE UTILITIES: Actions for the Canvas ---
+  // --- 4. STATE UTILITIES ---
   const addQuestion = (type: QuestionType) => {
     const newQuestion: Question = {
       id: crypto.randomUUID(),
@@ -156,40 +154,36 @@ export function SurveyBuilderProvider({
     setQuestions((prev) => {
       const filtered = prev.filter((q) => q.id !== id)
       if (activeQuestionId === id) {
-        setActiveQuestionId(filtered.length > 0 ? filtered[0]!.id : null)
+        setActiveQuestionId(filtered.length > 0 ? (filtered[0]?.id ?? null) : null)
       }
       return filtered
     })
   }
 
-  //  ADDED: Move Question Up Logic
   const moveQuestionUp = (id: string) => {
     setQuestions((prev) => {
       const index = prev.findIndex((q) => q.id === id)
-      if (index <= 0) return prev // Already at the top
-
+      if (index <= 0) return prev
       const newQuestions = [...prev]
-      // Swap with the item above it
-      ;[newQuestions[index - 1], newQuestions[index]] = [
-        newQuestions[index]!,
-        newQuestions[index - 1]!,
-      ]
+      const current = newQuestions[index]
+      const above = newQuestions[index - 1]
+      if (current && above) {
+        ;[newQuestions[index - 1], newQuestions[index]] = [current, above]
+      }
       return newQuestions
     })
   }
 
-  // ✅ ADDED: Move Question Down Logic
   const moveQuestionDown = (id: string) => {
     setQuestions((prev) => {
       const index = prev.findIndex((q) => q.id === id)
-      if (index < 0 || index >= prev.length - 1) return prev // Already at the bottom
-
+      if (index < 0 || index >= prev.length - 1) return prev
       const newQuestions = [...prev]
-      // Swap with the item below it
-      ;[newQuestions[index], newQuestions[index + 1]] = [
-        newQuestions[index + 1]!,
-        newQuestions[index]!,
-      ]
+      const current = newQuestions[index]
+      const below = newQuestions[index + 1]
+      if (current && below) {
+        ;[newQuestions[index], newQuestions[index + 1]] = [below, current]
+      }
       return newQuestions
     })
   }

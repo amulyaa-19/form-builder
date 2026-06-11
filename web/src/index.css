@@ -76,7 +76,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-[hsl(var(--body))] font-sans antialiased;
+    @apply bg-background text-body font-sans antialiased;
     line-height: 1.6;
   }
   h1,

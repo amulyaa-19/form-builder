@@ -11,6 +11,30 @@ type Variables = {
   user: { id: string; email: string }
 }
 
+type DBQuestion = {
+  id: string
+  type: string
+  prompt: string
+  is_required: number
+}
+
+type DBOption = {
+  id: string
+  question_id: string
+  value: string
+}
+
+interface DBResponse {
+  id: string
+  submitted_at: string
+}
+
+interface DBAnswer {
+  response_id: string
+  question_id: string
+  value: string
+}
+
 const surveys = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
 // Middleware to protect these routes
@@ -135,15 +159,15 @@ surveys.get('/:id', async (c) => {
       .bind(surveyId)
       .all()
 
-    // 4. Transform flat relational data models back into unified client layout arrays
-    const structuredQuestions = questions.map((q: any) => ({
+    // 4. Transform flat relational data models back into unified client layout arrays safely
+    const structuredQuestions = (questions as DBQuestion[]).map((q: DBQuestion) => ({
       id: q.id,
       type: q.type,
-      prompt: q.prompt,
       is_required: q.is_required === 1,
-      options: options
-        .filter((o: any) => o.question_id === q.id)
-        .map((o: any) => ({ id: o.id, value: o.value })),
+      prompt: q.prompt,
+      options: (options as DBOption[])
+        .filter((o: DBOption) => o.question_id === q.id)
+        .map((o: DBOption) => ({ id: o.id, value: o.value })),
     }))
 
     return c.json({
@@ -186,32 +210,66 @@ surveys.put('/:id', async (c) => {
         .bind(title, primary_color, logo_url, surveyId),
     )
 
-    // 2. Clear old state layout (ON DELETE CASCADE cleanly wipes matching question_options automatically)
-    statements.push(db.prepare(`DELETE FROM questions WHERE survey_id = ?`).bind(surveyId))
+    // 2. SMART DELETE: Only delete questions that are NO LONGER in the active payload
+    // This prevents cascading deletes from wiping out associated answers for existing questions.
+    if (Array.isArray(questions) && questions.length > 0) {
+      const activeQuestionIds = questions.map((q) => q.id)
+      const placeholders = activeQuestionIds.map(() => '?').join(',')
+      statements.push(
+        db
+          .prepare(`DELETE FROM questions WHERE survey_id = ? AND id NOT IN (${placeholders})`)
+          .bind(surveyId, ...activeQuestionIds),
+      )
+    } else {
+      // If the canvas is completely empty, it is safe to wipe all questions
+      statements.push(db.prepare(`DELETE FROM questions WHERE survey_id = ?`).bind(surveyId))
+    }
 
-    // 3. Inject current local snapshot map context sequence
+    // 3. UPSERT Questions: Insert new ones, update existing ones (DO NOT DELETE)
     if (Array.isArray(questions)) {
-      questions.forEach((q: any, qIndex: number) => {
-        statements.push(
-          db
-            .prepare(
-              `INSERT INTO questions (id, survey_id, type, prompt, order_index, is_required) VALUES (?, ?, ?, ?, ?, ?)`,
-            )
-            .bind(q.id, surveyId, q.type, q.prompt || '', qIndex, q.is_required ? 1 : 0),
-        )
+      questions.forEach(
+        (
+          q: {
+            id: string
+            type: string
+            prompt: string
+            is_required: boolean
+            options?: { id: string; value: string }[]
+          },
+          qIndex: number,
+        ) => {
+          statements.push(
+            db
+              .prepare(
+                `INSERT INTO questions (id, survey_id, type, prompt, order_index, is_required) 
+                 VALUES (?, ?, ?, ?, ?, ?)
+                 ON CONFLICT(id) DO UPDATE SET 
+                   type = excluded.type, 
+                   prompt = excluded.prompt, 
+                   order_index = excluded.order_index, 
+                   is_required = excluded.is_required`,
+              )
+              .bind(q.id, surveyId, q.type, q.prompt || '', qIndex, q.is_required ? 1 : 0),
+          )
 
-        if (q.type === 'multiple_choice' && q.options && Array.isArray(q.options)) {
-          q.options.forEach((opt: any, optIndex: number) => {
-            statements.push(
-              db
-                .prepare(
-                  `INSERT INTO question_options (id, question_id, value, order_index) VALUES (?, ?, ?, ?)`,
-                )
-                .bind(opt.id, q.id, opt.value || '', optIndex),
-            )
-          })
-        }
-      })
+          // 4. Options are safe to wipe and replace because answers do not map to option IDs
+          statements.push(
+            db.prepare(`DELETE FROM question_options WHERE question_id = ?`).bind(q.id),
+          )
+
+          if (q.type === 'multiple_choice' && q.options && Array.isArray(q.options)) {
+            q.options.forEach((opt: { id: string; value: string }, optIndex: number) => {
+              statements.push(
+                db
+                  .prepare(
+                    `INSERT INTO question_options (id, question_id, value, order_index) VALUES (?, ?, ?, ?)`,
+                  )
+                  .bind(opt.id, q.id, opt.value || '', optIndex),
+              )
+            })
+          }
+        },
+      )
     }
 
     // Perform safe, isolated round-trip transaction sequence execution
@@ -223,6 +281,7 @@ surveys.put('/:id', async (c) => {
     return c.json({ error: 'Relational data synchronization failure' }, 500)
   }
 })
+
 // GET /api/surveys/:id/results -> Formatted exactly for the ResultsView component
 surveys.get('/:id/results', async (c) => {
   const user = c.get('user')
@@ -256,13 +315,13 @@ surveys.get('/:id/results', async (c) => {
       .bind(surveyId)
       .all()
 
-    // 3. Transform data into the exact shape your ResultsView expects
-    const formattedResponses = rawResponses.map((res: any) => {
-      // Create a dictionary of { "question_id": "answer_value" }
+    // 3. Transform data safely
+    const formattedResponses = (rawResponses as unknown as DBResponse[]).map((res: DBResponse) => {
       const answersDict: Record<string, string> = {}
-      rawAnswers
-        .filter((ans: any) => ans.response_id === res.id)
-        .forEach((ans: any) => {
+
+      ;(rawAnswers as unknown as DBAnswer[])
+        .filter((ans: DBAnswer) => ans.response_id === res.id)
+        .forEach((ans: DBAnswer) => {
           answersDict[ans.question_id] = ans.value
         })
 
@@ -275,64 +334,13 @@ surveys.get('/:id/results', async (c) => {
 
     return c.json({
       totalResponses: formattedResponses.length,
-      lastResponseAt: formattedResponses.length > 0 ? formattedResponses[0]!.submittedAt : null,
+      lastResponseAt: formattedResponses.length > 0 ? formattedResponses[0]?.submittedAt : null,
       responses: formattedResponses,
     })
   } catch (error) {
     console.error('Results fetch error:', error)
     return c.json({ error: 'Failed to fetch results' }, 500)
   }
-})
-
-surveys.get('/api/surveys/:id/results', async (c) => {
-  const surveyId = c.req.param('id')
-  const db = c.env.DB
-
-  // 1. Fetch all responses for this survey (ordered newest first)
-  const { results: responsesRaw } = await db
-    .prepare(
-      `SELECT id, submitted_at FROM responses WHERE survey_id = ? ORDER BY submitted_at DESC`,
-    )
-    .bind(surveyId)
-    .all()
-
-  const totalResponses = responsesRaw.length
-  const lastResponseAt = totalResponses > 0 ? responsesRaw[0]!.submitted_at : null
-
-  if (totalResponses === 0) {
-    return c.json({ totalResponses: 0, lastResponseAt: null, responses: [] })
-  }
-
-  // 2. Fetch all answers associated with these responses safely
-  const { results: answersRaw } = await db
-    .prepare(
-      `SELECT a.response_id, a.question_id, a.value 
-     FROM answers a 
-     JOIN responses r ON a.response_id = r.id 
-     WHERE r.survey_id = ?`,
-    )
-    .bind(surveyId)
-    .all()
-
-  // 3. Group answers by response_id
-  const answersByResponse = answersRaw.reduce((acc: any, curr: any) => {
-    if (!acc[curr.response_id]) acc[curr.response_id] = {}
-    acc[curr.response_id][curr.question_id] = curr.value
-    return acc
-  }, {})
-
-  // 4. Format into the requested schema
-  const formattedResponses = responsesRaw.map((r: any) => ({
-    id: r.id,
-    submittedAt: r.submitted_at,
-    answers: answersByResponse[r.id] || {},
-  }))
-
-  return c.json({
-    totalResponses,
-    lastResponseAt,
-    responses: formattedResponses,
-  })
 })
 
 export default surveys
